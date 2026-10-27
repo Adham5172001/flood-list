@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Flood Stock List</title>
+<meta name="description" content="Shared family checklist of flood and power-cut supplies for 2 people for 10 days.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e2a47'/%3E%3Cpath d='M4 20q4-4 8 0t8 0 8 0v8H4z' fill='%235cc0dd'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: navy header band with a tide line, a sticky tally card, then sectioned item rows with steppers */
+:root{
+  --bg:#f3f6f8; --panel:#ffffff; --ink:#0f2233; --muted:#5a6b7b; --line:#dbe3ea;
+  --navy:#0e2a47; --navy-ink:#e8f1f8; --navy-muted:#a9c3d9;
+  --river:#0f6e8c; --river-soft:#e1f0f5; --done:#2f7d4f; --done-soft:#e3f2e8; --warn:#b4620c; --warn-soft:#fbefe1;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0c1820; --panel:#132430; --ink:#e6eef3; --muted:#93a6b4; --line:#24394a;
+  --navy:#081521; --navy-ink:#e6eef3; --navy-muted:#8fb0c8;
+  --river:#5cc0dd; --river-soft:#16394a; --done:#6fcf97; --done-soft:#173627; --warn:#f0a85a; --warn-soft:#3a2814; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-text-size-adjust:100%}
+.gut{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{background:var(--navy);color:var(--navy-ink);position:relative;overflow:hidden}
+.top .gut{padding-top:calc(28px + env(safe-area-inset-top,0px));padding-bottom:56px;position:relative;z-index:1}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--navy-muted);margin:0 0 8px}
+h1{font:800 clamp(30px,7vw,44px)/1.02 var(--display);margin:0 0 10px;letter-spacing:-.015em;text-wrap:balance}
+.lede{margin:0;color:var(--navy-muted);max-width:58ch}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.tag{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.22);color:var(--navy-ink)}
+.tide{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:46px;display:block}
+.tide .a{fill:var(--river);opacity:.35}.tide .b{fill:var(--river);opacity:.6}.tide .c{fill:var(--bg)}
+main{padding-bottom:calc(48px + env(safe-area-inset-bottom,0px))}
+.tally{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin:-28px 0 24px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:10px}
+.nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.num b{display:block;font:800 24px/1 var(--display);font-variant-numeric:tabular-nums}
+.num span{font-size:12px;color:var(--muted)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--done);transition:width .3s}
+.row2{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:1px}
+.dot.live{background:var(--done)}.dot.err{background:var(--warn)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--body);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--river);color:var(--panel)}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.who input{font:500 13px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 8px;width:9.5em}
+section{margin:0 0 22px}
+.sh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 8px;padding:0 2px}
+.sh h2{font:600 19px/1.2 var(--display);margin:0}
+.sh span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item.done{background:var(--done-soft)}
+.item.done .nm{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--done)}
+.chk{flex:none;width:26px;height:26px;border-radius:7px;border:2px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;color:transparent;padding:0}
+.item.done .chk{background:var(--done);border-color:var(--done);color:var(--panel)}
+.chk svg{width:14px;height:14px}
+.nm{flex:1;min-width:0}
+.nm small{display:block;color:var(--muted);font-size:12px;text-decoration:none}
+.step{flex:none;display:flex;align-items:center;gap:2px}
+.step button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 18px/1 var(--body);cursor:pointer;touch-action:manipulation}
+.step button:active{transform:scale(.95)}
+.cnt{min-width:60px;text-align:center;font:600 14px var(--body);font-variant-numeric:tabular-nums}
+.cnt em{font-style:normal;color:var(--muted);font-weight:400}
+.item.done .cnt{color:var(--done)}
+.empty{padding:16px;color:var(--muted);text-align:center}
+button:focus-visible,input:focus-visible{outline:2px solid var(--river);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.setup{background:var(--warn-soft);border:1px solid var(--warn);border-radius:14px;padding:16px;margin:0 0 22px;display:grid;gap:10px}
+.setup h2{font:600 18px var(--display);margin:0}
+.setup p{margin:0}
+.btn{justify-self:start;border:0;border-radius:10px;background:var(--river);color:var(--panel);font:600 14px var(--body);padding:10px 14px;cursor:pointer}
+.share{font:500 13px ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;word-break:break-all;user-select:all}
+footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.reset{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 12px;font:600 13px var(--body);cursor:pointer}
+.reset.arm{border-color:var(--warn);color:var(--warn)}
+.help{margin-top:18px;font-size:13px;color:var(--muted)}
+.help b{color:var(--ink)}
+@media (max-width:420px){.cnt{min-width:52px}.step button{width:34px;height:34px}.num b{font-size:21px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="gut">
+    <p class="eyebrow">Family flood plan</p>
+    <h1>Flood stock list</h1>
+    <p class="lede">Everything we need to get through 10 days of flooding or a power cut. Tap + when you buy something and everyone sees it within a few seconds. No sign-in needed.</p>
+    <div class="tags"><span class="tag">2 people</span><span class="tag">10 days</span><span class="tag">No electricity</span><span class="tag">No cooking</span></div>
+  </div>
+  <svg class="tide" viewBox="0 0 600 46" preserveAspectRatio="none" aria-hidden="true">
+    <path class="a" d="M0 18 Q50 6 100 18 T200 18 T300 18 T400 18 T500 18 T600 18 V46 H0Z"/>
+    <path class="b" d="M0 26 Q60 16 120 26 T240 26 T360 26 T480 26 T600 26 V46 H0Z"/>
+    <path class="c" d="M0 34 Q75 27 150 34 T300 34 T450 34 T600 34 V46 H0Z"/>
+  </svg>
+</header>
+
+<main class="gut">
+  <div class="tally" aria-live="polite">
+    <div class="nums">
+      <div class="num"><b id="tDone">–</b><span>items complete</span></div>
+      <div class="num"><b id="tWater">–</b><span>of 60 L water</span></div>
+      <div class="num"><b id="tLeft">–</b><span>still to buy</span></div>
+    </div>
+    <div class="bar"><i id="tBar"></i></div>
+    <div class="row2">
+      <span id="sync"><span class="dot"></span>Loading the shared list…</span>
+      <div class="seg" role="group" aria-label="Filter">
+        <button id="fAll" aria-pressed="true">All</button>
+        <button id="fLeft" aria-pressed="false">Still to buy</button>
+      </div>
+    </div>
+    <label class="who" for="who">Your name <input id="who" maxlength="20" placeholder="e.g. Dad" autocomplete="nickname"></label>
+  </div>
+
+  <div class="setup" id="setup" hidden>
+    <h2>Create the shared list</h2>
+    <p>This site isn't connected to a list yet. Create one, then send the link it gives you to the family.</p>
+    <button class="btn" id="create">Create shared list</button>
+    <div id="shareOut" hidden><p>Shared list created. Send this link:</p><div class="share" id="shareUrl"></div></div>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>
+    <span id="last">Waiting for the list…</span>
+    <button class="reset" id="reset">Reset all counts</button>
+  </footer>
+  <p class="help"><b>Emergency numbers.</b> Floodline (24 hours): 0345 988 1188 · Power cuts: 105 · Emergencies: 999</p>
+</main>
+
+<script>
+const LIST_ID = "";
+const API = "https://jsonblob.com/api/jsonBlob/";
+const DATA=[
+ ["Food: protein",[["tuna","Tinned tuna (ring-pull)",20,"tins"],["sardines","Sardines or mackerel",10,"tins"],["pulses","Chickpeas, kidney beans or lentils",15,"tins"],["beans","Baked beans",10,"tins"],["chicken","Tinned chicken or corned beef",6,"tins"],["pb","Peanut butter",3,"jars"],["nuts","Nuts and seeds, 200 g",6,"bags"]]],
+ ["Food: carbs",[["crackers","Crackers, oatcakes or rice cakes",10,"packs"],["bread","Long-life bread or wraps",6,"packs"],["cereal","Cereal or granola",4,"boxes"],["rice","Ready-to-eat rice or grain pouches",10,"pouches"]]],
+ ["Food: fruit and veg",[["veg","Sweetcorn, peas or mixed veg",10,"tins"],["fruit","Tinned fruit in juice",10,"tins"],["dried","Dried fruit",5,"bags"],["fresh","Apples and oranges",2,"bags"]]],
+ ["Snacks",[["bars","Cereal or protein bars",40,"bars"],["choc","Dark chocolate",6,"bars"],["biscuits","Biscuits",4,"packs"]]],
+ ["Water and drinks",[["water5","Bottled water, 5 L",12,"bottles"],["water05","Water, 500 ml",6,"bottles"],["milk","UHT milk, 200 ml",10,"cartons"],["juice","Juice cartons",10,"cartons"],["tabs","Water purification tablets",1,"pack"]]],
+ ["Kitchen and hygiene",[["opener","Manual tin opener",2,""],["plates","Paper plates",50,""],["cutlery","Plastic cutlery and cups",1,"pack"],["roll","Kitchen roll",4,"rolls"],["binbags","Bin bags",1,"roll"],["wipes","Wet wipes",4,"packs"],["sanitiser","Hand sanitiser",2,"bottles"],["loo","Toilet roll",12,"rolls"]]],
+ ["Light and power",[["torch","LED torch",2,""],["headtorch","Head torch",2,""],["lantern","Battery LED lantern",2,""],["batteries","AA/AAA batteries, large pack",4,"packs"],["powerbank","Power bank, 20,000 mAh+",3,""],["solar","Foldable solar charger",1,""],["cables","Spare charging cables",2,""],["radio","Battery or wind-up radio",1,""]]],
+ ["Warmth",[["blanket","Blanket or sleeping bag",2,""],["warmers","Hand warmers",20,""],["hwb","Hot water bottle",2,""],["socks","Thick socks and hat",2,"sets"]]],
+ ["Grab bags",[["backpack","Backpack",2,""],["docbag","Waterproof document bag",2,""],["firstaid","First aid kit",1,""],["painkillers","Painkillers",2,"packs"],["jacket","Waterproof jacket",2,""],["boots","Wellies or waterproof boots",2,"pairs"],["gloves","Rubber gloves",2,"pairs"],["masks","Face masks",1,"pack"],["drive","External drive for backups",1,""],["cash","Cash, £50 lots",4,"lots"]]]
+];
+const START={tuna:20,sardines:10,pulses:15,beans:10,chicken:6,pb:3,crackers:10,bread:6,cereal:4,rice:10,veg:10,fruit:10,dried:5,bars:40,choc:6,biscuits:4,water5:12,water05:6,milk:10,tabs:1,opener:2,roll:4,binbags:1,wipes:4,loo:12};
+
+const ITEMS={};DATA.forEach(([,l])=>l.forEach(([id,name,target,unit])=>ITEMS[id]={name,target,unit}));
+const $=id=>document.getElementById(id);
+const listId=new URLSearchParams(location.search).get("list")||LIST_ID;
+let remote={counts:{}}, local={}, timers={}, writing=Promise.resolve(), filter="all", ok=false;
+const tick='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function store(k,v){try{v===undefined?void 0:localStorage.setItem(k,v);return localStorage.getItem(k)}catch(e){return null}}
+
+const whoEl=$("who");whoEl.value=store("flood-who")||"";
+whoEl.addEventListener("change",()=>store("flood-who",whoEl.value.trim()));
+function who(){return whoEl.value.trim().slice(0,20)||"Someone"}
+
+function count(id){return id in local?local[id]:(remote.counts?.[id]?.n||0)}
+function ago(iso){if(!iso)return"";const s=(Date.now()-Date.parse(iso))/1000;if(s<60)return"just now";if(s<3600)return Math.round(s/60)+" min ago";if(s<86400)return Math.round(s/3600)+" h ago";return new Date(iso).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+function setStatus(kind,text){$("sync").innerHTML=`<span class="dot ${kind}"></span>`;$("sync").append(text)}
+
+function build(){
+  $("sections").innerHTML=DATA.map(([title,list],si)=>`<section data-s="${si}"><div class="sh"><h2>${esc(title)}</h2><span id="ss${si}"></span></div><div class="list">${list.map(([id,name])=>`
+  <div class="item" id="r-${id}" data-id="${id}">
+    <button class="chk" data-act="toggle" aria-label="Mark ${esc(name)} as bought">${tick}</button>
+    <div class="nm">${esc(name)}<small id="w-${id}"></small></div>
+    <div class="step"><button data-act="dec" aria-label="One fewer ${esc(name)}">−</button><span class="cnt" id="c-${id}"></span><button data-act="inc" aria-label="One more ${esc(name)}">+</button></div>
+  </div>`).join("")}<div class="empty" hidden>Everything in this section is bought.</div></div></section>`).join("");
+}
+function render(){
+  let done=0,total=0,latest=null;
+  DATA.forEach(([,list],si)=>{let sd=0,shown=0;
+    list.forEach(([id,,target])=>{const n=count(id),full=n>=target;total++;if(full){done++;sd++}
+      const row=$("r-"+id);row.classList.toggle("done",full);row.hidden=filter==="left"&&full;if(!row.hidden)shown++;
+      $("c-"+id).innerHTML=`${n}<em> / ${target}</em>`;
+      row.querySelector(".chk").setAttribute("aria-pressed",full);
+      row.querySelectorAll("button").forEach(b=>b.disabled=!ok);
+      if(n===0)row.querySelector('[data-act="dec"]').disabled=true;
+      const r=remote.counts?.[id],w=$("w-"+id);
+      w.textContent=r&&r.by&&r.n>0?`${r.by} · ${ago(r.at)}`:"";
+      if(r?.at&&(!latest||r.at>latest.at))latest={...r,id};
+    });
+    $("ss"+si).textContent=`${sd} of ${list.length}`;
+    document.querySelector(`section[data-s="${si}"] .empty`).hidden=!(filter==="left"&&shown===0);
+  });
+  const water=count("water5")*5+count("water05")*0.5;
+  $("tDone").textContent=`${done}/${total}`;
+  $("tWater").textContent=`${Math.round(water*10)/10} L`;
+  $("tLeft").textContent=total-done;
+  $("tBar").style.width=Math.round(done/total*100)+"%";
+  $("last").textContent=latest?`Last update: ${ITEMS[latest.id].name}, ${latest.by||"someone"}, ${ago(latest.at)}`:"No purchases logged yet.";
+}
+
+async function fetchList(){
+  const r=await fetch(API+listId,{headers:{Accept:"application/json"},cache:"no-store"});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();return j&&j.counts?j:{counts:{}};
+}
+async function pull(){
+  if(!listId||document.hidden)return;
+  try{remote=await fetchList();ok=true;setStatus("live","Live: updates every few seconds");}
+  catch(e){setStatus("err",ok?"Can't reach the list right now. Retrying…":"Couldn't load the shared list. Check your connection.");}
+  render();
+}
+function change(id,n){
+  if(!ok)return;n=Math.max(0,n);if(n===count(id))return;
+  local[id]=n;render();
+  clearTimeout(timers[id]);timers[id]=setTimeout(()=>{writing=writing.then(()=>commit(id))},400);
+}
+async function commit(id){
+  if(!(id in local))return;
+  const n=local[id];
+  try{
+    const latest=await fetchList();
+    latest.counts[id]={n,by:who(),at:new Date().toISOString()};
+    const r=await fetch(API+listId,{method:"PUT",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(latest)});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    remote=latest;if(local[id]===n)delete local[id];
+    setStatus("live","Saved. Everyone will see it within a few seconds");
+  }catch(e){delete local[id];setStatus("err","That change didn't save. Check your connection and try again.");}
+  render();
+}
+$("sections").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-act]");if(!b)return;
+  const id=b.closest(".item").dataset.id,t=ITEMS[id].target,n=count(id);
+  if(b.dataset.act==="inc")change(id,n+1);else if(b.dataset.act==="dec")change(id,n-1);else change(id,n>=t?0:t);
+});
+function setFilter(f){filter=f;$("fAll").setAttribute("aria-pressed",f==="all");$("fLeft").setAttribute("aria-pressed",f==="left");render()}
+$("fAll").onclick=()=>setFilter("all");$("fLeft").onclick=()=>setFilter("left");
+
+let armed=null;
+$("reset").onclick=()=>{
+  const b=$("reset");if(!ok)return;
+  if(!armed){b.classList.add("arm");b.textContent="Tap again to reset for everyone";armed=setTimeout(()=>{armed=null;b.classList.remove("arm");b.textContent="Reset all counts"},4000);return}
+  clearTimeout(armed);armed=null;b.classList.remove("arm");b.textContent="Reset all counts";
+  writing=writing.then(async()=>{try{const body={counts:{}};const r=await fetch(API+listId,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw 0;remote=body;local={};render()}catch(e){setStatus("err","Reset didn't save. Try again.")}});
+};
+
+$("create").onclick=async()=>{
+  const b=$("create");b.disabled=true;b.textContent="Creating…";
+  try{
+    const at=new Date().toISOString(),counts={};for(const k in START)counts[k]={n:START[k],by:"Imported",at};
+    const r=await fetch(API.slice(0,-1),{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({counts})});
+    const loc=r.headers.get("Location")||r.headers.get("location")||"";
+    const id=loc.split("/").pop();
+    if(!r.ok||!id)throw new Error("no id");
+    const url=location.origin+location.pathname+"?list="+id;
+    $("shareUrl").textContent=url;$("shareOut").hidden=false;b.hidden=true;
+    history.replaceState(null,"","?list="+id);location.reload();
+  }catch(e){b.disabled=false;b.textContent="Create shared list";setStatus("err","Couldn't create the list. Try again in a minute.")}
+};
+
+build();render();
+if(!listId){$("setup").hidden=false;setStatus("err","Not connected to a list yet");$("last").textContent="";}
+else{pull();setInterval(pull,5000);document.addEventListener("visibilitychange",pull);setInterval(render,60000);}
+</script>
+</body>
+</html>

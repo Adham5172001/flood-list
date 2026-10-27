@@ -79,7 +79,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .setup h2{font:600 18px var(--display);margin:0}
 .setup p{margin:0}
 .btn{justify-self:start;border:0;border-radius:10px;background:var(--river);color:var(--panel);font:600 14px var(--body);padding:10px 14px;cursor:pointer}
-.share{font:500 13px ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;word-break:break-all;user-select:all}
 footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
 .reset{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:7px 12px;font:600 13px var(--body);cursor:pointer}
 .reset.arm{border-color:var(--warn);color:var(--warn)}
@@ -123,10 +122,9 @@ footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-
   </div>
 
   <div class="setup" id="setup" hidden>
-    <h2>Create the shared list</h2>
-    <p>This site isn't connected to a list yet. Create one, then send the link it gives you to the family.</p>
-    <button class="btn" id="create">Create shared list</button>
-    <div id="shareOut" hidden><p>Shared list created. Send this link:</p><div class="share" id="shareUrl"></div></div>
+    <h2>Start the shared list</h2>
+    <p>The list is empty. Bring in the 25 items already bought so nobody buys them twice.</p>
+    <button class="btn" id="create">Bring in what's already bought</button>
   </div>
 
   <div id="sections"></div>
@@ -139,8 +137,7 @@ footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-
 </main>
 
 <script>
-const LIST_ID = "";
-const API = "https://jsonblob.com/api/jsonBlob/";
+const DB = "https://flood-list-default-rtdb.europe-west1.firebasedatabase.app/flood/counts";
 const DATA=[
  ["Food: protein",[["tuna","Tinned tuna (ring-pull)",20,"tins"],["sardines","Sardines or mackerel",10,"tins"],["pulses","Chickpeas, kidney beans or lentils",15,"tins"],["beans","Baked beans",10,"tins"],["chicken","Tinned chicken or corned beef",6,"tins"],["pb","Peanut butter",3,"jars"],["nuts","Nuts and seeds, 200 g",6,"bags"]]],
  ["Food: carbs",[["crackers","Crackers, oatcakes or rice cakes",10,"packs"],["bread","Long-life bread or wraps",6,"packs"],["cereal","Cereal or granola",4,"boxes"],["rice","Ready-to-eat rice or grain pouches",10,"pouches"]]],
@@ -156,8 +153,7 @@ const START={tuna:20,sardines:10,pulses:15,beans:10,chicken:6,pb:3,crackers:10,b
 
 const ITEMS={};DATA.forEach(([,l])=>l.forEach(([id,name,target,unit])=>ITEMS[id]={name,target,unit}));
 const $=id=>document.getElementById(id);
-const listId=new URLSearchParams(location.search).get("list")||LIST_ID;
-let remote={counts:{}}, local={}, timers={}, writing=Promise.resolve(), filter="all", ok=false;
+let remote={counts:{}}, local={}, timers={}, writing=Promise.resolve(), filter="all", ok=false, loaded=false;
 const tick='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function store(k,v){try{v===undefined?void 0:localStorage.setItem(k,v);return localStorage.getItem(k)}catch(e){return null}}
@@ -202,16 +198,32 @@ function render(){
   $("last").textContent=latest?`Last update: ${ITEMS[latest.id].name}, ${latest.by||"someone"}, ${ago(latest.at)}`:"No purchases logged yet.";
 }
 
-async function fetchList(){
-  const r=await fetch(API+listId,{headers:{Accept:"application/json"},cache:"no-store"});
-  if(!r.ok)throw new Error("HTTP "+r.status);
-  const j=await r.json();return j&&j.counts?j:{counts:{}};
+function clean(obj){const out={};for(const k in obj||{})if(ITEMS[k]&&obj[k]&&typeof obj[k].n==="number")out[k]=obj[k];return out}
+function loadedNow(){
+  loaded=true;ok=true;
+  $("setup").hidden=Object.keys(remote.counts).length>0;
+  setStatus("live","Live: changes appear instantly for everyone");
+  render();
 }
 async function pull(){
-  if(!listId||document.hidden)return;
-  try{remote=await fetchList();ok=true;setStatus("live","Live: updates every few seconds");}
-  catch(e){setStatus("err",ok?"Can't reach the list right now. Retrying…":"Couldn't load the shared list. Check your connection.");}
-  render();
+  if(document.hidden)return;
+  try{
+    const r=await fetch(DB+".json",{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    remote.counts=clean(await r.json());loadedNow();
+  }catch(e){setStatus("err",ok?"Can't reach the list right now. Retrying…":"Couldn't load the shared list. Check your connection.");render();}
+}
+let es=null,poll=null;
+function listen(){
+  if(!("EventSource" in window)){pull();poll=setInterval(pull,8000);return}
+  es=new EventSource(DB+".json");
+  const apply=(ev,merge)=>{try{const {path,data}=JSON.parse(ev.data);
+    if(path==="/"){remote.counts=merge?{...remote.counts,...clean(data)}:clean(data)}
+    else{const id=path.split("/")[1];if(ITEMS[id]){if(data===null)delete remote.counts[id];else{const cur=merge?{...(remote.counts[id]||{}),...data}:data;if(typeof cur.n==="number")remote.counts[id]=cur}}}
+    loadedNow();}catch(e){}};
+  es.addEventListener("put",ev=>apply(ev,false));
+  es.addEventListener("patch",ev=>apply(ev,true));
+  es.onerror=()=>{if(es.readyState===2){es=null;if(!poll){pull();poll=setInterval(pull,8000)}}else setStatus("err","Reconnecting…")};
 }
 function change(id,n){
   if(!ok)return;n=Math.max(0,n);if(n===count(id))return;
@@ -222,12 +234,11 @@ async function commit(id){
   if(!(id in local))return;
   const n=local[id];
   try{
-    const latest=await fetchList();
-    latest.counts[id]={n,by:who(),at:new Date().toISOString()};
-    const r=await fetch(API+listId,{method:"PUT",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(latest)});
+    const rec={n,by:who(),at:new Date().toISOString()};
+    const r=await fetch(DB+"/"+id+".json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(rec)});
     if(!r.ok)throw new Error("HTTP "+r.status);
-    remote=latest;if(local[id]===n)delete local[id];
-    setStatus("live","Saved. Everyone will see it within a few seconds");
+    remote.counts[id]=rec;if(local[id]===n)delete local[id];
+    setStatus("live","Saved. Everyone sees it straight away");
   }catch(e){delete local[id];setStatus("err","That change didn't save. Check your connection and try again.");}
   render();
 }
@@ -244,26 +255,22 @@ $("reset").onclick=()=>{
   const b=$("reset");if(!ok)return;
   if(!armed){b.classList.add("arm");b.textContent="Tap again to reset for everyone";armed=setTimeout(()=>{armed=null;b.classList.remove("arm");b.textContent="Reset all counts"},4000);return}
   clearTimeout(armed);armed=null;b.classList.remove("arm");b.textContent="Reset all counts";
-  writing=writing.then(async()=>{try{const body={counts:{}};const r=await fetch(API+listId,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw 0;remote=body;local={};render()}catch(e){setStatus("err","Reset didn't save. Try again.")}});
+  writing=writing.then(async()=>{try{const r=await fetch(DB+".json",{method:"DELETE"});if(!r.ok)throw 0;remote.counts={};local={};render()}catch(e){setStatus("err","Reset didn't save. Try again.")}});
 };
 
 $("create").onclick=async()=>{
-  const b=$("create");b.disabled=true;b.textContent="Creating…";
+  const b=$("create");b.disabled=true;b.textContent="Adding…";
   try{
-    const at=new Date().toISOString(),counts={};for(const k in START)counts[k]={n:START[k],by:"Imported",at};
-    const r=await fetch(API.slice(0,-1),{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({counts})});
-    const loc=r.headers.get("Location")||r.headers.get("location")||"";
-    const id=loc.split("/").pop();
-    if(!r.ok||!id)throw new Error("no id");
-    const url=location.origin+location.pathname+"?list="+id;
-    $("shareUrl").textContent=url;$("shareOut").hidden=false;b.hidden=true;
-    history.replaceState(null,"","?list="+id);location.reload();
-  }catch(e){b.disabled=false;b.textContent="Create shared list";setStatus("err","Couldn't create the list. Try again in a minute.")}
+    const at=new Date().toISOString(),counts={};for(const k in START)counts[k]={n:START[k],by:"Earlier list",at};
+    const r=await fetch(DB+".json",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(counts)});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    Object.assign(remote.counts,counts);$("setup").hidden=true;render();
+  }catch(e){b.disabled=false;b.textContent="Bring in what's already bought";setStatus("err","Couldn't save. Check your connection and try again.")}
 };
 
-build();render();
-if(!listId){$("setup").hidden=false;setStatus("err","Not connected to a list yet");$("last").textContent="";}
-else{pull();setInterval(pull,5000);document.addEventListener("visibilitychange",pull);setInterval(render,60000);}
+build();render();listen();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!es)pull()});
+setInterval(render,60000);
 </script>
 </body>
 </html>
